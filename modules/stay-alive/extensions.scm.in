@@ -1,0 +1,7 @@
+(define-module (stay-alive extensions)
+               #:export (dijkstra
+                          find-paths
+                          see-level))
+
+(load-extension "XXextensionsdirXX/libguile_dijkstra" "init_dijkstra")
+(load-extension "XXextensionsdirXX/libguile_fov" "init_fov")

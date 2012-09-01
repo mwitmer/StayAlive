@@ -1,13 +1,20 @@
 # http://www.gnu.org/software/automake
 
-Makefile.in
-
-# http://www.gnu.org/software/autoconf
-
-/autom4te.cache
-/aclocal.m4
-/compile
-/configure
-/depcomp
-/install-sh
-/missing
+Makefile
+scm/Makefile
+src/Makefile
+modules/Makefile
+lib/Makefile
+lib/.libs
+lib/.libs/*
+*.Po
+*.lo
+*.la
+*.so*
+*.o*
+*~
+/lib/.deps/libguile_dijkstra_la-dijkstra.Plo
+/lib/.deps/libguile_fov_la-fov.Plo
+/lib/.deps/libguile_fov_la-fovwrapper.Plo
+/modules/error
+/modules/stay-alive/.agent.scm.swp
