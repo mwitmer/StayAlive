@@ -4,6 +4,7 @@ Makefile
 scm/Makefile
 src/Makefile
 modules/Makefile
+modules/stay-alive/extensions.scm
 lib/Makefile
 lib/.libs
 lib/.libs/*
@@ -35,4 +36,5 @@ lib/.libs/*
 /m4/lt~obsolete.m4
 /config.h
 /libtool
+/src/stay_alive
 /stamp-h1
