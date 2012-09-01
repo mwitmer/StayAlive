@@ -26,6 +26,7 @@ pkgdatadir="$datadir/$PACKAGE"
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PROG_SED
 
 PKG_CHECK_MODULES([GUILE], [guile-2.0])
 GUILE_SITE_DIR

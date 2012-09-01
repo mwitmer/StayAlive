@@ -417,7 +417,7 @@ uninstall-am: uninstall-moduleDATA
 
 
 extensions.scm: extensions.scm.in
-	sed 's|XXextensionsdirXX|$(libdir)/stay_alive|' <extensions.scm.in >extensions.scm
+	@SED@ 's|XXextensionsdirXX|$(libdir)/stay_alive|' <extensions.scm.in >extensions.scm
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

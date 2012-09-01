@@ -4,4 +4,4 @@ module_DATA = extensions.scm lang.scm ncurses-interface.scm shared.scm util.scm 
 		 player.scm square.scm	timer.scm weapon.scm
 
 extensions.scm: extensions.scm.in
-	sed 's|XXextensionsdirXX|$(libdir)/stay_alive|' <extensions.scm.in >extensions.scm
+	@SED@ 's|XXextensionsdirXX|$(libdir)/stay_alive|' <extensions.scm.in >extensions.scm
