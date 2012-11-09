@@ -154,12 +154,14 @@
       ((#\esc) 'none)
       (else (get-input)))))
 
-(define* (select-from-list lst disp prompt empty-message #:optional (count 1) (prev '()))
+(define* (select-from-list lst disp prompt empty-message #:optional (count 1) (prev '()) #:key def)
   (clear-message)
   (refresh-level-view)
   (cond
    ((= (length lst) count) lst)
-   ((< (length lst) count) (begin (message empty-message) #f))
+   ((< (length lst) count) (if def
+			       (def)
+			       (begin (message empty-message) #f)))
    (else (let ((choices (srfi-map (lambda (el letter row)
 			     (message (format #f "~a - ~a" letter (disp el)) #:y (+ 1 row) #:x 5)
 			     (cons letter el))       

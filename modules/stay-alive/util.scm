@@ -8,6 +8,7 @@
 	    locations-adjacent?
 	    list-ref-random
 	    random-match
+	    percent
 	    all-directions
 	    pred-and
 	    pred-not
@@ -21,12 +22,24 @@
 	    search-string
 	    fold-each-index
 	    bitvector-foreach-row-major
+	    increase-odds
+	    decrease-odds
 	    e
+	    percent
 	    location-values
 	    inverse-row-major
 	    row-major))
 
 (define e 2.71828182845894523536)
+
+(define (percent n)
+  (/ n 100))
+
+(define (increase-odds odds multiplier)
+  (- 1 (* (- 1 odds) (- 1 multiplier))))
+
+(define (decrease-odds odds multiplier)
+  (* odds multiplier))
 
 (define (inverse-row-major n cols)
   (list (quotient n cols) (remainder n cols)))

@@ -1,5 +1,6 @@
 (define-module (stay-alive agent)
   #:use-module (shelf shelf)
+  #:use-module (shelf shelf-util)
   #:use-module (stay-alive util)
   #:use-module (stay-alive ncurses-interface)
   #:use-module (stay-alive lang)
@@ -62,8 +63,6 @@
 	   (new-location (make-new-location (list row col) direction))) 
       (move-agent level agent new-location))))
 
-(define (standard-attack verb damage) #f)
-
 (define-objects-public Agent  
   ((initialize! (method ()
 		  (if (not (this 'body #:def #f)) 
@@ -86,7 +85,7 @@
       (letrec* ((letters (map (lambda (item) (item #:def #\? 'letter)) (this 'items))))
 	(let set-letter-and-insert ((test-letters (iota 52)))
 	  (if (null? test-letters) 
-	      (begin (message "No room for that!") #f)
+	      (begin (if (this 'player? #:def #f) (message "No room for that!")) #f)
 	      (let ((letter (integer->char (+ (car test-letters) 97))))
 		(if (let find-letter ((letters letters) (test-letter letter))
 		      (cond
@@ -138,24 +137,47 @@
    (can-melee? #t)
    (can-move? #t)
    (status 'playing)
+   (choose-weapon
+    (method () 
+      (let ((weapon-list 
+	     (select-from-list 
+	      (filter (pred-and 
+		       (applicator 'weapon? #:def #f) 
+		       (applicator 'wielded? #:def #f)) 
+		      (this 'items)) 
+	      (applicator 'describe-short) 
+	      "Attack with what?" 
+	      "" #:def (lambda () 
+			 (select-from-list ((this 'body) 'melee-parts)
+					   (applicator 'describe)
+					   "Attack with what?"
+					   "You have nothing to attack with!")))))
+	(if weapon-list (car weapon-list) #f))))
    (melee-attack 
     (method (target level)
-      (let ((part ((target 'body) 'choose-by-weight)))
-	(or
-	 (message-player 
-	  level (this 'location)
-	  (lambda (visibility)
-	    (if (bitvector-ref
-		 visibility 
-		 (row-major (car (target 'location)) 
-			    (cadr (target 'location)) 
-			    (cadr (array-dimensions (level 'squares)))))
-		(sentence-agent-verb-agent-possessive this 'to-attack target (part 'describe))
-		(sentence-agent-verb-agent this 'to-attack "it"))))
-	 (message-player 
-	  level (target 'location) 
-	  (sentence-possessive-item-verb-passive target (part 'describe) 'to-attack))))
-      #t))
+      (let* ((weapon (this 'choose-weapon)))
+	(if weapon
+	 (let*
+	     ((part ((target 'body) 'choose-by-weight))
+	      (attack-success? #t)
+	      (verb 'to-hit))
+	   (or
+	    (message-player 
+	     level (this 'location)
+	     (lambda (visibility)
+	       (if (bitvector-ref
+		    visibility 
+		    (row-major (car (target 'location)) 
+			       (cadr (target 'location)) 
+			       (cadr (array-dimensions (level 'squares)))))
+		   (sentence-agent-verb-agent-possessive this verb target (part 'describe))
+		   (sentence-agent-verb-agent this verb "it"))))
+	    (message-player 
+	     level (target 'location) 
+	     (sentence-possessive-item-verb-passive target (part 'describe) 'to-attack)))
+	   (if attack-success? (part 'damage level target (weapon 'slicing) (weapon 'heft) (weapon 'sharpness)))
+	   #t)
+	 #f))))
    (speed 1000)		     
    (erratic-movement 0)
    (take-turn 

@@ -18,9 +18,13 @@
 
 (define-syntax double-case
   (syntax-rules ()
-                ((_ p1 p2 ((v) r1 r2) ...)
-                 (case p1
-                   ((v) (if p2 r1 r2)) ...))))
+    ((_ p1 p2 ((v) r1 r2) ... (else def1 def2))
+     (case p1
+       ((v) (if p2 r1 r2)) ...
+       (else (if p2 def1 def2))))
+    ((_ p1 p2 ((v) r1 r2) ...)
+     (case p1
+       ((v) (if p2 r1 r2)) ...))))
 
 (define (sentence text)
   (format #f "~a." (capitalize text)))
@@ -35,8 +39,13 @@
    (else (format #f "~a's" (agent 'describe-definite)))))
 
 (define (conjugate-passive-verb verb player?)
-  (double-case verb player?
-	       ((to-attack) "are attacked" "is attacked")))
+  (let* ((infinitive-string (cadr (string-split (symbol->string verb) #\-))) 
+	 (verb-string (string-append infinitive-string
+				     (case (string-ref (string-reverse infinitive-string) 0) 
+				       ((#\e) "d")
+				       (else "ed")))))
+    (double-case verb player?
+		 (else (string-append "are " verb-string) (string-append "is " verb-string)))))
 
 (define (sentence-agent-verb-agent-possessive actor verb recipient possession)
   (sentence
@@ -76,15 +85,11 @@
 	  (conjugate-passive-verb verb (actor 'player?))))
 
 (define (conjugate-verb  verb player?)
-  (double-case verb player?
-	       ((to-drop) "drop" "drops")
-	       ((to-hit) "hit" "hits")
-	       ((to-wield) "wield" "wields")
-	       ((to-be) "are" "is")
-	       ((to-unwield) "unwield" "unwields")
-	       ((to-put-on) "put on" "puts on")
-	       ((to-take-off) "take off" "takes off")
-	       ((to-light) "light" "lights")
-	       ((to-extinguish) "extinguish" "extinguishes")
-	       ((to-attack) "attack" "attacks")
-	       ((to-open) "open" "opens")))
+  (let ((verb-string (cadr (string-split (symbol->string verb) #\-))))
+    (double-case verb player?
+		 ((to-be) "are" "is")
+		 ((to-put-on) "put on" "puts on")
+		 ((to-take-off) "take off" "takes off")
+		 (else verb-string (case (string-ref (string-reverse verb-string) 0)
+				     ((#\h #\x) ((string-append verb-string "es")))
+				     (else (string-append verb-string "s")))))))

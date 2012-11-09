@@ -8,6 +8,7 @@
   #:use-module (stay-alive ncurses-interface)
   #:use-module (stay-alive util)
   #:use-module (ice-9 format)
+  #:use-module (stay-alive lang)
   #:export (select-part-from-list))
 
 (define* (create-body parts #:optional inherited-side)
@@ -127,26 +128,26 @@
 		      (set! (this 'parts) (if (list? parts) parts (list parts))))
 		  (if side
 		      (set! (this 'side) side))))		
+   (damage (method (level agent slicing heft sharpness) 
+	     (message-player level (agent 'location) 
+			     (sentence-possessive-item-verb-passive agent (this 'describe) 'to-damage))))
    (describe (method ()
 	       (format #f "~a~a"
 		       (if (this 'side #:def #f) (format #f "~a " (this 'side)) "")
 		       (this 'name))))
    (dismember (method (level agent) 
-		(message-player level (agent 'location) (format #f "~a ~a is dismembered!" 
-								(agent 'describe-possessive) 
-								(this 'describe)))
+		(message-player level (agent 'location) 
+				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-dismember))
 		(set! (this 'injured?) #t)
 		(set! (this 'disabled?) #t)
 		(set! (this 'dismembered?) #t)))
    (injure (method (level agent) 				
-	     (message-player level (agent 'location) (format #f "~a ~a is injured!" 
-							     (agent 'describe-possessive) 
-							     (this 'describe)))
+	     (message-player level (agent 'location) 
+				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-injure))
 	     (set! (this 'injured?) #t)))
    (disable (method (level agent) 
-	      (message-player level (agent 'location) (format #f "~a ~a is disabled!" 
-							      (agent 'describe-possessive)
-							      (this 'describe)))
+	     (message-player level (agent 'location) 
+				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-disable))
 	      (set! (this 'injured?) #t)
 	      (set! (this 'disabled?) #t)
 	      (map
@@ -159,9 +160,10 @@
    (all-parts
     (method () (cons this (fold-right append '() (map (applicator 'all-parts) (this 'parts #:def '()))))))
    (melee-parts 
-    (method () (fold-right append '() 
-			   (map (lambda (part) (matching-instances (applicator 'can-melee? #:def #f) 'parts part)) 
-				(this 'parts)))))
+    (method () 
+      (fold-right append '() 
+		  (map (lambda (part) (matching-instances (applicator 'can-melee? #:def #f) 'parts part)) 
+		       (this 'parts)))))
    (can-melee? #f))
 ((Arm
   ((name 'arm)
@@ -217,6 +219,10 @@
  (Tooth
   ((name 'tooth)
    (size 'none)
+   (slicing `(,(percent 5) 1))
+   (heft `(,(percent 1) 1))
+   (sharpness `(,(percent 10) 2))
+   (display (method ()  (if (this 'multiple?) "teeth" "tooth")))
    (can-melee? #t)))
  (Abdomen
   ((name 'abdomen)
