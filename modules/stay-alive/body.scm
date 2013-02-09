@@ -1,3 +1,4 @@
+;; Updated!
 (define-module (stay-alive body)
   #:use-module (shelf shelf)
   #:use-module (shelf shelf-util)
@@ -20,65 +21,79 @@
 		 (lambda (side) 
 		   (if (null? (cadr part-spec)) 
 		       #f 
-		       (list (create-body (cadr part-spec) (or side inherited-side)) side)))))
+		       (list (create-body 
+			      (cadr part-spec) 
+			      (or side inherited-side)) side)))))
 	    (if (list? main-part-spec)
 		(cond
 		  ((list? (cadr main-part-spec))
-		  (map (lambda (side) (instance (car main-part-spec)
-						#:args (make-child-parts side))) (cadr main-part-spec)))
+		  (map (lambda (side) 
+			 (instance (car main-part-spec)
+				   #:args (make-child-parts side))) 
+		       (cadr main-part-spec)))
 		 ((number? (cadr main-part-spec))
 		  (map (lambda (n) 
-			 (instance (car main-part-spec) #:args (make-child-parts inherited-side))) 
+			 (instance (car main-part-spec) 
+				   #:args (make-child-parts inherited-side))) 
 		       (iota (cadr main-part-spec))))
 		 ((symbol? (cadr main-part-spec))
 		  (list (instance (car main-part-spec) 
-				  (m (,(cadr main-part-spec) #t)) #:args (make-child-parts inherited-side))))
+				  (m (,(cadr main-part-spec) #t)) 
+				  #:args (make-child-parts inherited-side))))
 		 (else (display (cadr main-part-spec)) (newline)))
-		(list (instance main-part-spec #:args (make-child-parts inherited-side))))))
+		(list (instance main-part-spec 
+				#:args (make-child-parts inherited-side))))))
 	parts)))
 
 (define-objects-public Body  
-  ((find (method (pred) (filter pred (this 'all-parts))))
-   (add-part (method (new-part to-add-to)
-	       (and-let* ((matching-to-add-to (this 'find (pred-proc-eq to-add-to (applicator 'name)))))
-		 (set! (matching-to-add-to 'parts) (cons new-part (matching-to-add-to 'parts))))))
-   (all-parts (method ()
-		(fold-right append '() (map (applicator 'all-parts) (this 'parts)))))
-   (melee-parts (method ()
-		  (fold-right append '() (map (applicator 'melee-parts) (this 'parts)))))
-   (choose-by-weight (method ()
-		       (let* ((weights 
-			       (map 
-				(lambda (part) (list part (hashq-ref body-part-size-weights (part 'size)))) 
-				(this 'all-parts)))
-			      (sum (fold + 0 (map (lambda (weight) (cadr weight)) weights)))
-			      (choice (random sum)))
-			 (let select ((accum 0) (weights weights))
-			   (if (> (+ accum (cadar weights)) choice) (caar weights)
-			       (select (+ accum (cadar weights)) (cdr weights)))))))
+  ((find (method (pred) (filter pred ($ this 'all-parts))))
+   (add-part 
+    (method (new-part to-add-to)
+      (and-let* ((matching-to-add-to 
+		  ($ this 'find (pred-proc-eq to-add-to (applicator 'name)))))
+	(set! ($ matching-to-add-to 'parts) 
+	      (cons new-part ($ matching-to-add-to 'parts))))))
+   (all-parts 
+    (method ()
+      (fold-right append '() (map (applicator 'all-parts) ($ this 'parts)))))
+   (melee-parts 
+    (method ()
+      (fold-right append '() (map (applicator 'melee-parts) ($ this 'parts)))))
+   (choose-by-weight 
+    (method ()
+      (let* ((weights 
+	      (map 
+	       (lambda (part) 
+		 (list part (hashq-ref body-part-size-weights ($ part 'size)))) 
+	       ($ this 'all-parts)))
+	     (sum (fold + 0 (map (lambda (weight) (cadr weight)) weights)))
+	     (choice (random sum)))
+	(let select ((accum 0) (weights weights))
+	  (if (> (+ accum (cadar weights)) choice) (caar weights)
+	      (select (+ accum (cadar weights)) (cdr weights)))))))
    (can-spin-webs? 
     (method ()
       (not (null?
-	    (this 'find 
-		  (pred-and 
-		   (pred-proc-eq #f (applicator 'disabled? #:def #f)) 
-		   (pred-proc-eq #t (applicator 'spins-webs? #:def #f))))))))
+	    ($ this 'find 
+	       (pred-and 
+		(pred-proc-eq #f (applicator 'disabled? #:def #f)) 
+		(pred-proc-eq #t (applicator 'spins-webs? #:def #f))))))))
    (blind? 
     (method ()	    
       (null?
-       (this 'find
-	     (pred-and
-	      (pred-proc-eq #f (applicator 'disabled? #:def #f))
-	      (pred-proc-eq #t (applicator 'can-see? #:def #f))))))))
+       ($ this 'find
+	  (pred-and
+	   (pred-proc-eq #f (applicator 'disabled? #:def #f))
+	   (pred-proc-eq #t (applicator 'can-see? #:def #f))))))))
   ((UnknownBody  
     ((initialize!
       (method ()
-	(set! (this 'parts)
+	(set! ($ this 'parts)
 	      (create-body `((,Abdomen ()))))))))
    (ArachnidBody
     ((initialize!
       (method ()
-	(set! (this 'parts)
+	(set! ($ this 'parts)
 	      (create-body `((,Cephalothorax (((,Eye 8) ())					 
 					      ((,Pedipalp 2) ())
 					      ((,Leg 4) ())))
@@ -86,13 +101,13 @@
    (SlugBody  
     ((initialize!
       (method ()
-	(set! (this 'parts)
+	(set! ($ this 'parts)
 	      (create-body `((,Abdomen
 			      (((,Eye 4) ()))))))))))
    (HumanoidBody  
     ((initialize! 
       (method ()
-	(set! (this 'parts) 
+	(set! ($ this 'parts) 
 	      (create-body
 	       `((,Abdomen 
 		  ((,Neck
@@ -116,54 +131,77 @@
    (largest 400)))
 
 (define (select-part-from-list eligible-parts prep quantity)
-  (select-from-list eligible-parts
-		    (lambda (part) (format #f "~6,,,@a ~a" (part 'side #:def "") (part 'name)))
-		    (format #f "~a what?" (capitalize prep))
-		    "You don't have any space for that!"
-		    quantity))
+  (select-from-list 
+   eligible-parts
+   (lambda (part) 
+     (format #f "~6,,,@a ~a" (part 'side #:def "") ($ part 'name)))
+   (format #f "~a what?" (capitalize prep))
+   "You don't have any space for that!"
+   quantity))
 
 (define-objects-public BodyPart  
   ((initialize! (method (#:optional parts side)
 		  (if parts
-		      (set! (this 'parts) (if (list? parts) parts (list parts))))
+		      (set! ($ this 'parts) (if (list? parts) parts (list parts))))
 		  (if side
-		      (set! (this 'side) side))))		
+		      (set! ($ this 'side) side))))		
    (damage (method (level agent slicing heft sharpness) 
-	     (message-player level (agent 'location) 
-			     (sentence-possessive-item-verb-passive agent (this 'describe) 'to-damage))))
+	     (message-player level ($ agent 'location) 
+			     (sentence-possessive-item-verb-passive 
+			      agent ($ this 'describe) 'to-damage))))
    (describe (method ()
 	       (format #f "~a~a"
-		       (if (this 'side #:def #f) (format #f "~a " (this 'side)) "")
-		       (this 'name))))
-   (dismember (method (level agent) 
-		(message-player level (agent 'location) 
-				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-dismember))
-		(set! (this 'injured?) #t)
-		(set! (this 'disabled?) #t)
-		(set! (this 'dismembered?) #t)))
-   (injure (method (level agent) 				
-	     (message-player level (agent 'location) 
-				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-injure))
-	     (set! (this 'injured?) #t)))
-   (disable (method (level agent) 
-	     (message-player level (agent 'location) 
-				(sentence-possessive-item-verb-passive agent (this 'describe) 'to-disable))
-	      (set! (this 'injured?) #t)
-	      (set! (this 'disabled?) #t)
-	      (map
-	       (lambda (item) (item 'unwield level agent))
-	       (filter (lambda (item) (find (pred-eq this) (item 'wielded-with #:def '()))) (agent 'items)))))
+		       (if ($ this 'side #:def #f) (format #f "~a " ($ this 'side)) "")
+		       ($ this 'name))))
+   (dismember 
+    (method (level agent) 
+      (message-player 
+       level 
+       ($ agent 'location) 
+       (sentence-possessive-item-verb-passive 
+	agent ($ this 'describe) 'to-dismember))
+      (set! ($ this 'injured?) #t)
+      (set! ($ this 'disabled?) #t)
+      (set! ($ this 'dismembered?) #t)))
+   (injure 
+    (method (level agent) 				
+      (message-player 
+       level 
+       ($ agent 'location) 
+       (sentence-possessive-item-verb-passive agent ($ this 'describe) 'to-injure))
+      (set! ($ this 'injured?) #t)))
+   (disable 
+    (method (level agent) 
+      (message-player 
+       level 
+       ($ agent 'location) 
+       (sentence-possessive-item-verb-passive agent ($ this 'describe) 'to-disable))
+      (set! ($ this 'injured?) #t)
+      (set! ($ this 'disabled?) #t)
+      (map
+       (lambda (item) ($ item 'unwield level agent))
+       (filter 
+	(lambda (item) 
+	  (find (pred-eq this) ($ item 'wielded-with #:def '()))) 
+	($ agent 'items)))))
    (heal (method (level agent) 
-	   (set! (this 'disabled?) #f)
-	   (set! (this 'dismembered?) #f)
-	   (set! (this 'injured?) #f)))		
+	   (set! ($ this 'disabled?) #f)
+	   (set! ($ this 'dismembered?) #f)
+	   (set! ($ this 'injured?) #f)))		
    (all-parts
-    (method () (cons this (fold-right append '() (map (applicator 'all-parts) (this 'parts #:def '()))))))
+    (method () 
+      (cons 
+       this 
+       (fold-right append '() (map (applicator 'all-parts) ($ this 'parts #:def '()))))))
    (melee-parts 
     (method () 
-      (fold-right append '() 
-		  (map (lambda (part) (matching-instances (applicator 'can-melee? #:def #f) 'parts part)) 
-		       (this 'parts)))))
+      (fold-right 
+       append 
+       '() 
+       (map 
+	(lambda (part) 
+	  (matching-instances (applicator 'can-melee? #:def #f) 'parts part)) 
+	($ this 'parts)))))
    (can-melee? #f))
 ((Arm
   ((name 'arm)
@@ -174,6 +212,10 @@
  (Hand
   ((name 'hand)
    (can-melee? #t)
+   (melee-verbs '(to-punch to-smack to-slap to-poke))
+   (slicing `(,(percent 1) 1))
+   (heft `(,(percent 20) 2))
+   (sharpness `(,(percent 0) 1))
    (size 'small)))
  (Finger
   ((name 'finger)
@@ -184,6 +226,10 @@
  (Foot
   ((name 'foot)
    (can-melee? #t)
+   (melee-verbs '(to-kick to-stomp to-punt))
+   (slicing `(,(percent 0) 1))
+   (heft `(,(percent 20) 3))
+   (sharpness `(,(percent 0) 1))
    (size 'small)))
  (Toe
   ((name 'toe)
@@ -193,16 +239,19 @@
    (size 'large)))
  (Eye  
   ((can-see? #t)
-   (disable (method (level agent) 
-	      (super 'disable level agent)				  
-	      (if ((agent 'body) 'blind?)
-		  (message-player level (agent 'location) 
-				  (format #f "~a ~a blind!"
-					  (capitalize (agent 'describe-definite)) 
-					  (conjugate-verb 'to-be (agent 'player?)))))))
+   (disable 
+    (method (level agent) 
+      ((super this) 'disable level agent)				  
+      (if ($ ($ agent 'body) 'blind?)
+	  (message-player 
+	   level 
+	   ($ agent 'location) 
+	   (format #f "~a ~a blind!"
+		   (capitalize ($ agent 'describe-definite)) 
+		   (conjugate-verb 'to-be ($ agent 'player?)))))))
    (heal (method (level agent)
-	   (super 'heal level agent)					 
-	   (message-player level (agent 'location)
+	   ((super this) 'heal level agent)					 
+	   (message-player level ($ agent 'location)
 			   (format #f "~a can see!"
 				   (capitalize (agent 'describe-definite))))))
    (size 'smallest)
@@ -220,9 +269,10 @@
   ((name 'tooth)
    (size 'none)
    (slicing `(,(percent 5) 1))
+   (melee-verbs '(to-bite to-chew to-nibble-on))
    (heft `(,(percent 1) 1))
    (sharpness `(,(percent 10) 2))
-   (display (method ()  (if (this 'multiple?) "teeth" "tooth")))
+   (name (method ()  (if (this 'multiple?) "teeth" "tooth")))
    (can-melee? #t)))
  (Abdomen
   ((name 'abdomen)
@@ -240,5 +290,8 @@
  (Stinger
   ((name 'stinger)
    (can-melee? #t)
+   (slicing `(,(percent 0) 1))
+   (heft `(,(percent 0) 1))
+   (sharpness `(,(percent 15) 4))
    (poisonous? #t)
    (size 'large)))))

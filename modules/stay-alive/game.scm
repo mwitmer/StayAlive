@@ -1,3 +1,4 @@
+;; Updated!
 (define-module (stay-alive game)
   #:use-module (stay-alive dungeon)
   #:use-module (stay-alive level)
@@ -33,25 +34,26 @@
 (define the-game
   (let ((game #f))
     (lambda* (#:optional start-over?)
-      (set! game (cond
-		  ((and game (not start-over?)) game)
-		  ((and (file-exists? (savefile)) (not start-over?)) 
-		   (compile (load-objcode (savefile)) #:from 'objcode #:env the-game-module))
-		  (else (instance 
-			 Game 
-			 #:args (list
-				 (instance
-				  Player
- 				  (m (speed 1000)
-				     (dungeon-name 'main)
-				     (depth 0)
-				     (status 'descending-stairs)
-				     (strength 18)) 
-				  #:args `(,(list
-					     (instance Torch #:args '())
-					     (instance Buckler #:args '())
-					     (instance Longsword #:args '())
-					     (instance Gauntlets #:args '())))))))))
+      (set! game 
+	    (cond
+	     ((and game (not start-over?)) game)
+	     ((and (file-exists? (savefile)) (not start-over?)) 
+	      (compile (load-objcode (savefile)) #:from 'objcode #:env the-game-module))
+	     (else (instance 
+		    Game 
+		    #:args (list
+			    (instance
+			     Player
+			     (m (speed 1000)
+				(dungeon-name 'main)
+				(depth 0)
+				(status 'descending-stairs)
+				(strength 18)) 
+			     #:args `(,(list
+					(instance Torch #:args '())
+					(instance Buckler #:args '())
+					(instance Longsword #:args '())
+					(instance Gauntlets #:args '())))))))))
       game)))
 
 (define (reset-the-game)
@@ -61,40 +63,49 @@
   (if ticks (set! ((the-game) 'clock) (+ ((the-game) 'clock) ticks)))
   ((the-game) 'clock))
 (define-object Game
-  (initialize! (method (player)
-		 (set! (this 'dungeons) (h (main (instance StandardDungeon #:args '(main 10)))))
-		 (set! (this 'random-state-datum) (random-state->datum (random-state-from-platform)))
-		 (set! (this 'clock) 0)
-		 (set! (this 'player) player)))
-  (open-level (method ()
-		(set! (this 'dungeon) ((this `(dungeons ,((this 'player) 'dungeon-name))) #:op 'reference))
-		(if (and (this 'level #:def #f)
-			 (and (eq? (this '(level dungeon)) (this 'dungeon))
-			      (eq? (this '(level depth)) (this '(player depth)))))
-		    (this 'level)
-		    (begin (if (this 'level #:def #f) (this 'put-level-async))
-			   (set! (this 'level) 
-				 (let ((raw-level ((this 'dungeon) 'get-level (this '(player depth)))))
-				   (if (procedure? raw-level) raw-level
-				       (compile (bytecode-record-bytecode raw-level) 
-						#:from 'bytecode #:env the-game-module))))			   
-			   ((this 'level) 'update-weights! (lambda (tile) (tile 'weight)))
-			   (let ((player (this 'player)))
-			     ((this 'level) 'insert-agent player)
-			     (set! (this 'player) (player #:op 'reference)))
-			   (this 'level)))))
-  (put-level (method () 
-	       (if (this 'saving-thread #:def #f)
-		   (join-thread (this 'saving-thread)))
-	       ((this 'dungeon) 'cache-level (this 'level) the-game-module)))
-  (put-level-async (method ()
-		     (if (this 'saving-thread #:def #f)
-			 (join-thread (this 'saving-thread)))
-		     (set! (this 'saving-thread)
-			   (call-with-new-thread 
-			    (lambda () 
-			      ((this 'dungeon) 'cache-level (this 'level) the-game-module)
-			      (set! (this 'saving-thread) #f))))))
+  (initialize! 
+   (method (player)
+     (set! ($ this 'dungeons) 
+	   (h (main (instance StandardDungeon #:args '(main 10)))))
+     (set! ($ this 'random-state-datum) 
+	   (random-state->datum (random-state-from-platform)))
+     (set! ($ this 'clock) 0)
+     (set! ($ this 'player) player)))
+  (open-level 
+   (method ()
+     (set! ($ this 'dungeon) 
+	   (object-reference 
+	    ($ this `(dungeons ,(($ this 'player) 'dungeon-name)))))
+     (if (and ($ this 'level #:def #f)
+	      (and (eq? ($ this '(level dungeon)) ($ this 'dungeon))
+		   (eq? ($ this '(level depth)) ($ this '(player depth)))))
+	 ($ this 'level)
+	 (begin (if ($ this 'level #:def #f) ($ this 'put-level-async))
+		(set! ($ this 'level) 
+		      (let ((raw-level 
+			     ($ ($ this 'dungeon) 'get-level ($ this '(player depth)))))
+			(if (procedure? raw-level) raw-level
+			    (compile (bytecode-record-bytecode raw-level) 
+				     #:from 'bytecode #:env the-game-module))))
+		($ ($ this 'level) 'update-weights! (lambda (tile) ($ tile 'weight)))
+		(let ((player ($ this 'player)))
+		  ($ ($ this 'level) 'insert-agent player)
+		  (set! ($ this 'player) (object-reference player)))
+		($ this 'level)))))
+  (put-level 
+   (method () 
+     (if ($ this 'saving-thread #:def #f)
+	 (join-thread ($ this 'saving-thread)))
+     ($ ($ this 'dungeon) 'cache-level ($ this 'level) the-game-module)))
+  (put-level-async 
+   (method ()
+     (if ($ this 'saving-thread #:def #f)
+	 (join-thread ($ this 'saving-thread)))
+     (set! ($ this 'saving-thread)
+	   (call-with-new-thread 
+	    (lambda () 
+	      ($ ($ this 'dungeon) 'cache-level ($ this 'level) the-game-module)
+	      (set! ($ this 'saving-thread) #f))))))
   (over (method (msg)
 	       (finish-message msg)
 	       (if (file-exists? "save.go") (delete-file "save.go"))))
@@ -103,25 +114,25 @@
 	      (savefile)
 	    (lambda () 
 	      (write-objcode 
-	       (bytecode-record->objcode (this #:op 'compile the-game-module))
+	       (bytecode-record->objcode (object-compile this the-game-module))
 	       (current-output-port))))))
   (play (method (the-screen)
 	  (init-display the-screen)      
-	  (set! *random-state* (datum->random-state (this 'random-state-datum)))
-	  (let explore-level ((level (this 'open-level))
-			      (player (this 'player))) 
-	    (set! (player 'status) 'playing)
-	    (let ((paths (level 'paths-to-agent player)))
-	      (while (eq? (player 'status) 'playing) (level 'next-turn player)))
+	  (set! *random-state* (datum->random-state ($ this 'random-state-datum)))
+	  (let explore-level ((level ($ this 'open-level))
+			      (player ($ this 'player))) 
+	    (set! ($ player 'status) 'playing)
+	    (let ((paths ($ level 'paths-to-agent player)))
+	      (while (eq? ($ player 'status) 'playing) ($ level 'next-turn player)))
 	    (case (player 'status)
-	      ((quitting) (this 'over "you quit"))
+	      ((quitting) ($ this 'over "you quit"))
 	      ((saving)
 	       (finish-message "see you later")
-	       (this 'put-level)
-	       (this 'save))
-	      ((dying) (this 'over "you are dead"))
+	       ($ this 'put-level)
+	       ($ this 'save))
+	      ((dying) ($ this 'over "you are dead"))
 	      (else 
-	       (explore-level (this 'open-level) player)))))))
+	       (explore-level ($ this 'open-level) player)))))))
 
 (define (finish-message msg) 
   (display-clean-up)

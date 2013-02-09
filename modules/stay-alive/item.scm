@@ -1,3 +1,4 @@
+;; Updated!
 (define-module (stay-alive item)
   #:use-module (shelf shelf)
   #:use-module (shelf shelf-util)
@@ -55,30 +56,36 @@
     (method (level agent)				
       (and-let* 
 	  ((eligible-parts
-	    (let ((wear-matches ($ ($ agent 'body) 'find 
-				   (pred-and ($ this #:op 'get '(wear-requires pred))
-					     (pred-not (applicator 'wearing? #:def #f))))))
+	    (let ((wear-matches 
+		   ($ ($ agent 'body) 'find 
+		      (pred-and (object-get this '(wear-requires pred))
+				(pred-not (applicator 'wearing? #:def #f))))))
 	      (if ($ this '(wear-requires also-wield?) #:def #f)
-		  (filter (lambda (part)
-			    (not (fold (lambda (a b) (or a b)) #f 
-				       (map (lambda (part) (part 'wielding? #:def #f)) 
-					    (filter 
-					     (lambda (part)
-					       (equal? (part 'name) (this '(wear-requires also-wield?)))) 
-					     (part 'all-parts)))))) wear-matches)
+		  (filter 
+		   (lambda (part)
+		     (not (fold 
+			   (lambda (a b) (or a b)) #f 
+			   (map (lambda (part) ($ part 'wielding? #:def #f)) 
+				(filter 
+				 (lambda (part)
+				   (equal? ($ part 'name) 
+					   ($ this '(wear-requires also-wield?)))) 
+				 ($ part 'all-parts)))))) wear-matches)
 		  wear-matches)))
 	   (parts 
-	    (select-part-from-list eligible-parts "on" (this #:op 'get '(wear-requires quantity) #:def 1))))
+	    (select-part-from-list eligible-parts "on" (object-get this '(wear-requires quantity) #:def 1))))
 	(if parts
 	    (begin
-	      (for-each (lambda (part) (set! (part 'wearing?) #t)) parts)
-	      (if (this '(wear-requires also-wield?) #:def #f)
-		  (for-each (lambda (part)
-			      (map
-			       (obj-setter 'wielding? #t)
-			       (filter (lambda (part) 
-					 (eq? (part 'name) (this '(wear-requires also-wield?))))             
-				       (part 'all-parts)))) parts))
+	      (for-each (lambda (part) (set! ($ part 'wearing?) #t)) parts)
+	      (if ($ this '(wear-requires also-wield?) #:def #f)
+		  (for-each 
+		   (lambda (part)
+		     (map
+		      (obj-setter 'wielding? #t)
+		      (filter (lambda (part) 
+				(eq? ($ part 'name) 
+				     ($ this '(wear-requires also-wield?))))             
+			      ($ part 'all-parts)))) parts))
 	      (set! ($ this 'worn?) #t)						      
 	      (set! ($ this 'worn-on) (map object-reference parts))
 	      (message-player level ($ agent 'location) (sentence-agent-verb-item agent 'to-put-on this))
@@ -122,7 +129,7 @@
 	(if parts
 	    (begin (for-each (lambda (part) (set! ($ part 'wielding?) #t)) parts)
 		   (set! ($ this 'wielded?) #t)
-		   (set! ($ this 'wielded-with) (map (applicator #:op 'reference) parts))
+		   (set! ($ this 'wielded-with) (map object-reference parts))
 		   (message-player level ($ agent 'location) (sentence-agent-verb-item agent 'to-wield this))
 		   #t)
 	    #f)))))

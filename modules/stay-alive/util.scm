@@ -1,3 +1,4 @@
+;; Updated!
 (define-module (stay-alive util)
   #:use-module (srfi srfi-1)
   #:export (for-each-index
@@ -52,12 +53,12 @@
 
 (define all-directions '(up down left right up-right up-left down-right down-left))
 (define (search-string str test-proc apply-proc fail-proc)
-		       (let search-recur ((idx 0))
-			 (if (test-proc str idx)
-			     (apply-proc str idx)
-			     (if (< idx (- (string-length str) 1))
-				 (search-recur (+ idx 1))
-				 (fail-proc str)))))
+  (let search-recur ((idx 0))
+    (if (test-proc str idx)
+	(apply-proc str idx)
+	(if (< idx (- (string-length str) 1))
+	    (search-recur (+ idx 1))
+	    (fail-proc str)))))
 
 (define all-letters 
   (map! (lambda (ch) (if (char-upper-case? ch) (char-downcase ch) (char-upcase ch)))
@@ -69,7 +70,10 @@
 	     (res (proc el)))
        (if res res (random-match (delete el lst) proc)))))
 
-(define (list-ref-random l) (list-ref l (random (length l))))
+(define (list-ref-random l) 
+  (let ((len (length l)))
+    (if (= len 0) #f
+       (list-ref l (random len)))))
 
 (define (pred-ident pred) (lambda (el) pred))
 (define (pred-and pred1 pred2) (lambda (el) (and (pred1 el) (pred2 el))))
@@ -77,9 +81,10 @@
 (define (pred-eq obj) (lambda (el) (eq? el obj)))
 (define (pred-proc-eq obj proc) (lambda (el) (eq? (proc el) obj)))
 
-(define proc-begin (lambda args 
-		     (lambda (obj)
-		       (for-each (lambda (arg) (arg obj)) args))))
+(define proc-begin 
+  (lambda args 
+    (lambda (obj)
+      (for-each (lambda (arg) (arg obj)) args))))
 
 (define (locations-adjacent? loc1 loc2)
   (and (<= (abs (- (car loc1) (car loc2))) 1)
@@ -100,7 +105,10 @@
     (let ((dimensions (array-dimensions squares))
           (row (car location))
           (col (cadr location)))
-      (and (> row 0) (> col 0) (< col (- (cadr dimensions) 1)) (< row (- (car dimensions) 1))))))
+      (and (> row 0) 
+	   (> col 0) 
+	   (< col (- (cadr dimensions) 1)) 
+	   (< row (- (car dimensions) 1))))))
 
 (define within-dimensions? 
   (lambda (location squares)
