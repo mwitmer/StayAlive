@@ -37,3 +37,7 @@ lib/.libs/*
 /libtool
 /src/stay_alive
 /stamp-h1
+/error
+/errors
+/modules/stay-alive/#dungeon.scm#
+/build/config.log
